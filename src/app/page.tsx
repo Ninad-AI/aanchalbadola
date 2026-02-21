@@ -278,29 +278,31 @@ export default function Home() {
 
           <div className="relative w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md animate-fade-in-up">
             <div
-              className="relative bg-black/80 backdrop-blur-3xl border border-white/10 p-6 sm:p-8 md:p-12 shadow-2xl min-h-[260px] sm:min-h-[300px] flex flex-col justify-center"
+              className="relative bg-black/80 backdrop-blur-3xl border border-white/10 p-6 sm:p-8 md:p-10 shadow-2xl min-h-[220px] sm:min-h-[260px] flex flex-col justify-center"
               style={{ borderRadius: "1.5rem" }}
             >
               {/* Modal Background Glow */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-rose-600/20 blur-[80px] rounded-full pointer-events-none" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-600/20 blur-[80px] rounded-full pointer-events-none" />
 
-              <div className="relative z-10 flex flex-col grow justify-center items-center text-center">
-                <h3 className="text-2xl sm:text-3xl font-black mb-2 text-white">
-                  {flowState === "auth" ? "Identification." : "Duration."}
-                </h3>
-                <p className="text-sm sm:text-base text-white/50 mb-8 sm:mb-10 text-balance">
-                  {flowState === "auth"
-                    ? "Choose how you would like to proceed."
-                    : "Select your preferred session length."}
-                </p>
-
+              <div className="relative z-10 flex flex-col grow justify-center items-center">
+                <div className="w-full max-w-[320px] text-left">
+                  <h3 className="text-3xl sm:text-[32px] font-black mb-1 sm:mb-2 text-white tracking-tight">
+                    {flowState === "auth" ? "Identification." : "Duration."}
+                  </h3>
+                  <p className="text-[15px] sm:text-[17px] text-white/50 mb-6 sm:mb-8 font-medium whitespace-nowrap">
+                    {flowState === "auth"
+                      ? "Choose how you would like to proceed."
+                      : "Select your preferred session length."}
+                  </p>
+                  <br />
+                </div>
                 {/* Auth Step */}
                 {flowState === "auth" && (
-                  <div className="w-full animate-fade-in-up flex justify-center mt-auto md:absolute md:bottom-8 md:left-0 md:right-0">
+                  <div className="w-full animate-fade-in-up flex justify-center mt-3 sm:mt-4">
                     <button
                       onClick={() => setFlowState("payment")}
-                      className="w-[85%] sm:w-[280px] h-14 sm:h-16 rounded-3xl bg-white text-black text-[16px] sm:text-[18px] font-extrabold shadow-xl hover:scale-[1.02] transition-all duration-300 mx-auto"
+                      className="w-[90%] sm:w-[320px] h-14 sm:h-16 rounded-3xl bg-white text-black text-[16px] sm:text-[18px] font-extrabold shadow-xl hover:scale-[1.02] transition-all duration-300 mx-auto"
                     >
                       Continue as Guest
                     </button>
