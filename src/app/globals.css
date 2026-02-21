@@ -1,0 +1,210 @@
+@import "tailwindcss";
+
+/* ── Design Tokens ── */
+@theme inline {
+  --color-dark-bg: #0B132B;
+  /* Ocean Dusk */
+  --color-dark-surface: #1C2541;
+  /* Slate Navy */
+  --color-dark-border: #1F2937;
+  --color-rose-primary: #ec4899;
+  /* Vibrant Magenta/Pink */
+  --color-rose-glow: #ec48991A;
+  --color-indigo-secondary: #f59e0b;
+  /* Bright Yellow/Amber */
+  --color-indigo-glow: #f59e0b1A;
+  --color-text-primary: #FAFAFA;
+  --color-text-secondary: #D1D5DB;
+  --color-text-muted: #9CA3AF;
+  --font-sans: var(--font-outfit), system-ui, -apple-system, sans-serif;
+
+  /* Custom Animations - Geometric */
+  --animate-expand-ring: expand-ring 2s ease-out infinite;
+  --animate-float-sharp: float-sharp 8s ease-in-out infinite;
+  --animate-fade-in-up: fade-in-up 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-slide-in-right: slide-in-right 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-pulse-sharp: pulse-sharp 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-glow-box: glow-box 3s ease-in-out infinite alternate;
+  --animate-spin-slow: spin 3s linear infinite;
+  --animate-shimmer: shimmer 2s linear infinite;
+}
+
+/* ── Keyframes ── */
+@keyframes expand-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes float-sharp {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-sharp {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes glow-box {
+  0% {
+    box-shadow: 0 0 10px var(--color-rose-glow), 0 0 30px var(--color-rose-glow);
+  }
+
+  100% {
+    box-shadow: 0 0 20px var(--color-rose-glow), 0 0 60px var(--color-rose-glow);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ── Base Styles ── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: var(--font-sans);
+}
+
+body {
+  background: var(--color-dark-bg);
+  color: var(--color-text-primary);
+  overflow-x: hidden;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Noise Overlay ── */
+.noise-overlay {
+  position: relative;
+}
+
+.noise-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/noise.svg');
+  background-repeat: repeat;
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 50;
+  mix-blend-mode: overlay;
+}
+
+/* ── Glass Effect - Geometric, Sharpe Edges ── */
+.glass {
+  background: rgba(15, 15, 15, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+  border-radius: 0;
+  /* Strict squares/rectangles */
+}
+
+.glass-strong {
+  background: linear-gradient(145deg, rgba(20, 20, 20, 0.8) 0%, rgba(10, 10, 10, 0.95) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-top-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+}
+
+/* Inner Glow for Sharp Boxes */
+.inner-glow {
+  position: relative;
+}
+
+.inner-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+/* ── Gradient Text ── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-rose-primary), var(--color-indigo-secondary) 80%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-dark-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-dark-border);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
