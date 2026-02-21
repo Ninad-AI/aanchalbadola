@@ -146,71 +146,89 @@ export default function Home() {
         `}
       >
         {flowState === "active" ? (
-          /* ── Active Call Interface ── */
-          <div className="w-full h-full flex flex-col items-center justify-center">
-            {/* Avatar */}
-            <div className="relative w-[220px] h-[220px] sm:w-[300px] sm:h-[300px] md:w-[400px] md:h-[400px] mb-10 sm:mb-12">
-              <div
-                className={`absolute inset-[-20px] bg-gradient-to-r from-rose-500 to-indigo-500 opacity-30 blur-xl transition-all duration-500 ${isSpeaking ? "scale-110" : "scale-100"}`}
-                style={{
-                  borderRadius: isSpeaking
-                    ? "60% 40% 30% 70% / 60% 30% 70% 40%"
-                    : "40% 60% 70% 30% / 50% 60% 30% 60%",
-                  animation: "morph 8s ease-in-out infinite",
-                }}
-              />
-
-              <div
-                ref={(el) => {
-                  avatarRefs.current[0] = el;
-                }}
-                className="relative w-full h-full overflow-hidden shadow-2xl transition-all duration-1000 will-change-transform"
-                style={{
-                  borderRadius: "50%",
-                  animation: "morph 12s ease-in-out infinite alternate",
-                }}
-              >
-                <Image
-                  src={CREATOR.image}
-                  alt={CREATOR.name}
-                  fill
-                  className="object-cover scale-110"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent pointer-events-none" />
-              </div>
+          /* ── Active Call Interface (Minimal Redesign) ── */
+          <div className="w-full h-screen fixed inset-0 z-40 bg-[#0F0F13] flex flex-col items-center justify-center">
+            {/* Ambient Background Glow for Active Call */}
+            <div
+              className={`absolute inset-0 transition-opacity duration-1000 ${isSpeaking ? "opacity-100" : "opacity-40"}`}
+            >
+              <div className="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] bg-rose-500/10 blur-[120px] rounded-full mix-blend-screen animate-pulse" />
+              <div className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] bg-indigo-500/10 blur-[100px] rounded-full mix-blend-screen" />
             </div>
 
-            {/* Timer & End Call */}
-            <div className="flex items-center gap-6 sm:gap-8">
-              <div className="text-center">
-                <div className="text-[10px] sm:text-xs text-white/50 uppercase tracking-widest mb-1">
-                  Time Left
-                </div>
-                <div className="text-3xl sm:text-4xl font-light tabular-nums tracking-tighter">
-                  {formatTime(timeLeft)}
+            {/* Absolute Top Right End Call Button (Page Corner) */}
+            <button
+              onClick={handleEndCall}
+              className="fixed top-6 right-6 sm:top-10 sm:right-10 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors duration-300 z-50 backdrop-blur-md"
+              aria-label="End call"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5 sm:w-6 sm:h-6 text-white/80"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            {/* Central Minimal Avatar */}
+            <div className="relative z-10 flex flex-col items-center animate-fade-in-up">
+              {/* Subtle Breathing Avatar */}
+              <div className="relative mb-12 sm:mb-16">
+                {/* Voice reactive glow */}
+                <div
+                  className={`absolute inset-[-10px] rounded-full bg-white/20 blur-xl transition-all duration-300 ease-out
+                    ${isSpeaking ? "scale-110 opacity-60" : "scale-90 opacity-0"}
+                  `}
+                />
+
+                <div
+                  ref={(el) => {
+                    avatarRefs.current[0] = el;
+                  }}
+                  className={`relative w-[200px] h-[200px] sm:w-[280px] sm:h-[280px] rounded-full overflow-hidden shadow-2xl ring-1 ring-white/10 transition-transform duration-[2000ms]
+                    ${isSpeaking ? "scale-105" : "scale-100"}
+                  `}
+                >
+                  <Image
+                    src={CREATOR.image}
+                    alt={CREATOR.name}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-black/20" />
                 </div>
               </div>
 
-              <button
-                onClick={handleEndCall}
-                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-rose-500/20 hover:border-rose-500/50 hover:text-rose-400 transition-all duration-300 group"
-                aria-label="End call"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:rotate-90"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+              {/* Minimal Text Status & Timer */}
+              <div className="text-center">
+                <h3 className="text-2xl sm:text-3xl font-light text-white tracking-wide mb-2">
+                  {CREATOR.name}
+                </h3>
+
+                <div className="flex items-center justify-center gap-2 mb-8">
+                  <div
+                    className={`w-1.5 h-1.5 rounded-full ${isSpeaking ? "bg-green-400 animate-pulse" : "bg-white/30"}`}
+                  />
+                  <span className="text-xs sm:text-sm text-white/50 uppercase tracking-[0.2em] font-medium">
+                    {isSpeaking ? "Speaking" : "Connected"}
+                  </span>
+                </div>
+
+                {/* Elegant Minimal Timer */}
+                <div className="inline-block px-6 py-2 sm:px-8 sm:py-3 rounded-full bg-white/5 border border-white/5 backdrop-blur-sm">
+                  <span className="text-3xl sm:text-4xl font-extralight tabular-nums tracking-tighter text-white">
+                    {formatTime(timeLeft)}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
@@ -326,7 +344,7 @@ export default function Home() {
 
           <div className="relative w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md animate-fade-in-up">
             <div
-              className={`relative bg-black/80 backdrop-blur-3xl border border-white/10 px-6 sm:px-8 shadow-2xl flex flex-col justify-center transition-all duration-500 ease-in-out ${flowState === "payment" ? "p-6 sm:p-8 md:p-10 min-h-[400px] sm:min-h-[440px]" : "py-10 sm:py-12 md:py-14 min-h-[180px] sm:min-h-[220px]"}`}
+              className={`relative bg-black/80 backdrop-blur-3xl border border-white/10 px-6 sm:px-8 shadow-2xl flex flex-col justify-center ${flowState === "payment" ? "p-6 sm:p-8 md:p-10 min-h-[400px] sm:min-h-[440px]" : "py-10 sm:py-12 md:py-14 min-h-[180px] sm:min-h-[220px]"}`}
               style={{ borderRadius: "1.5rem" }}
             >
               {/* Modal Background Glow */}
@@ -336,7 +354,9 @@ export default function Home() {
               <div className="relative z-10 flex flex-col h-full grow justify-start items-center">
                 <div className="w-full max-w-[340px] flex flex-col grow">
                   <div className="w-full text-left">
-                    {flowState === "auth" ? <br /> : (
+                    {flowState === "auth" ? (
+                      <br />
+                    ) : (
                       <>
                         <br />
                         <br />
@@ -380,10 +400,11 @@ export default function Home() {
                               className={`
               h-[78px] rounded-2xl border transition-all duration-300
               flex flex-col items-center justify-center
-              ${isSelected
-                                  ? "border-white bg-white/10 text-white shadow-lg"
-                                  : "border-white/20 bg-white/[0.02] text-white/70 hover:border-white/50"
-                                }
+              ${
+                isSelected
+                  ? "border-white bg-white/10 text-white shadow-lg"
+                  : "border-white/20 bg-white/[0.02] text-white/70 hover:border-white/50"
+              }
               ${index === 3 ? "col-span-1" : ""}
               ${index === 4 ? "col-span-2" : ""}
             `}
@@ -407,10 +428,11 @@ export default function Home() {
                           disabled={!selectedMinutes}
                           className={`
           w-[90%] sm:w-[320px] h-[64px] rounded-2xl font-semibold text-lg transition-all duration-500
-          ${selectedMinutes
-                              ? "bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 text-white shadow-[0_10px_40px_rgba(255,80,80,0.35)] hover:scale-[1.02]"
-                              : "bg-white/10 text-white/30 border border-white/10 cursor-not-allowed"
-                            }
+          ${
+            selectedMinutes
+              ? "bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 text-white shadow-[0_10px_40px_rgba(255,80,80,0.35)] hover:scale-[1.02]"
+              : "bg-white/10 text-white/30 border border-white/10 cursor-not-allowed"
+          }
         `}
                         >
                           Begin Session
