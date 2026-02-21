@@ -50,8 +50,10 @@ export default function Home() {
 
     let frameId: number;
     const animate = () => {
-      mousePosRef.current.x += (mouseTargetRef.current.x - mousePosRef.current.x) * 0.1;
-      mousePosRef.current.y += (mouseTargetRef.current.y - mousePosRef.current.y) * 0.1;
+      mousePosRef.current.x +=
+        (mouseTargetRef.current.x - mousePosRef.current.x) * 0.1;
+      mousePosRef.current.y +=
+        (mouseTargetRef.current.y - mousePosRef.current.y) * 0.1;
 
       avatarRefs.current.forEach((el, i) => {
         if (!el) return;
@@ -119,7 +121,6 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-[#0F0F13] text-white font-sans selection:bg-rose-500/30">
-
       {/* ── Background Blobs ── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
@@ -147,7 +148,6 @@ export default function Home() {
         {flowState === "active" ? (
           /* ── Active Call Interface ── */
           <div className="w-full h-full flex flex-col items-center justify-center">
-
             {/* Avatar */}
             <div className="relative w-[220px] h-[220px] sm:w-[300px] sm:h-[300px] md:w-[400px] md:h-[400px] mb-10 sm:mb-12">
               <div
@@ -161,14 +161,22 @@ export default function Home() {
               />
 
               <div
-                ref={(el) => { avatarRefs.current[0] = el; }}
+                ref={(el) => {
+                  avatarRefs.current[0] = el;
+                }}
                 className="relative w-full h-full overflow-hidden shadow-2xl transition-all duration-1000 will-change-transform"
                 style={{
                   borderRadius: "50%",
                   animation: "morph 12s ease-in-out infinite alternate",
                 }}
               >
-                <Image src={CREATOR.image} alt={CREATOR.name} fill className="object-cover scale-110" priority />
+                <Image
+                  src={CREATOR.image}
+                  alt={CREATOR.name}
+                  fill
+                  className="object-cover scale-110"
+                  priority
+                />
                 <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent pointer-events-none" />
               </div>
             </div>
@@ -176,8 +184,12 @@ export default function Home() {
             {/* Timer & End Call */}
             <div className="flex items-center gap-6 sm:gap-8">
               <div className="text-center">
-                <div className="text-[10px] sm:text-xs text-white/50 uppercase tracking-widest mb-1">Time Left</div>
-                <div className="text-3xl sm:text-4xl font-light tabular-nums tracking-tighter">{formatTime(timeLeft)}</div>
+                <div className="text-[10px] sm:text-xs text-white/50 uppercase tracking-widest mb-1">
+                  Time Left
+                </div>
+                <div className="text-3xl sm:text-4xl font-light tabular-nums tracking-tighter">
+                  {formatTime(timeLeft)}
+                </div>
               </div>
 
               <button
@@ -185,7 +197,16 @@ export default function Home() {
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-rose-500/20 hover:border-rose-500/50 hover:text-rose-400 transition-all duration-300 group"
                 aria-label="End call"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-hover:rotate-90"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -195,7 +216,6 @@ export default function Home() {
         ) : (
           /* ── Idle Hero ── */
           <div className="relative w-full max-w-6xl mx-auto min-h-[80vh] flex flex-col md:flex-row items-center justify-center md:justify-between gap-8 md:gap-12 px-4 sm:px-8">
-
             {/* Text Content */}
             <div className="relative z-20 flex flex-col items-center md:items-start text-center md:text-left">
               <h2 className="text-[10px] sm:text-sm md:text-base text-rose-300 font-bold tracking-[0.15em] sm:tracking-[0.2em] uppercase mb-3 sm:mb-4 animate-fade-in-up">
@@ -205,7 +225,9 @@ export default function Home() {
 
               <h1 className="text-[3.2rem] sm:text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mix-blend-exclusion">
                 <span className="block">Aanchal</span>
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">badola.</span>
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">
+                  badola.
+                </span>
               </h1>
               <br />
               <br />
@@ -218,7 +240,16 @@ export default function Home() {
                 >
                   <span className="flex items-center justify-center gap-3">
                     Start Session
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M5 12h14" />
                       <path d="m12 5 7 7-7 7" />
                     </svg>
@@ -230,22 +261,30 @@ export default function Home() {
             {/* Image */}
             <div className="relative w-[240px] h-[240px] sm:w-[300px] sm:h-[300px] md:w-[500px] md:h-[600px] flex-shrink-0">
               <div
-                ref={(el) => { avatarRefs.current[1] = el; }}
+                ref={(el) => {
+                  avatarRefs.current[1] = el;
+                }}
                 className="relative w-full h-full overflow-hidden shadow-2xl hover:scale-[1.02] transition-transform duration-700 will-change-transform"
                 style={{ borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%" }}
               >
-                <Image src={CREATOR.image} alt={CREATOR.name} fill className="object-cover scale-110" priority />
+                <Image
+                  src={CREATOR.image}
+                  alt={CREATOR.name}
+                  fill
+                  className="object-cover scale-110"
+                  priority
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60" />
               </div>
 
               {/* Floating Decorative Elements */}
               <div
                 className="absolute -top-8 -right-8 sm:-top-12 sm:-right-12 w-16 h-16 sm:w-24 sm:h-24 bg-white/10 backdrop-blur-md border border-white/20 z-20 animate-float"
-                style={{ borderRadius: '50% 50% 50% 50% / 50% 50% 50% 50%' }}
+                style={{ borderRadius: "50% 50% 50% 50% / 50% 50% 50% 50%" }}
               />
               <div
                 className="absolute bottom-20 -left-10 sm:-left-16 w-20 h-20 sm:w-32 sm:h-32 bg-rose-500/20 backdrop-blur-md border border-rose-500/20 z-20 animate-float animation-delay-2000"
-                style={{ borderRadius: '60% 40% 30% 70% / 60% 30% 70% 40%' }}
+                style={{ borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%" }}
               />
             </div>
 
@@ -257,7 +296,16 @@ export default function Home() {
               >
                 <span className="flex items-center justify-center gap-3 w-full">
                   Start Session
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
                   </svg>
@@ -278,76 +326,99 @@ export default function Home() {
 
           <div className="relative w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md animate-fade-in-up">
             <div
-              className="relative bg-black/80 backdrop-blur-3xl border border-white/10 p-6 sm:p-8 md:p-10 shadow-2xl min-h-[220px] sm:min-h-[260px] flex flex-col justify-center"
+              className={`relative bg-black/80 backdrop-blur-3xl border border-white/10 px-6 sm:px-8 shadow-2xl flex flex-col justify-center transition-all duration-500 ease-in-out ${flowState === "payment" ? "p-6 sm:p-8 md:p-10 min-h-[400px] sm:min-h-[440px]" : "py-10 sm:py-12 md:py-14 min-h-[180px] sm:min-h-[220px]"}`}
               style={{ borderRadius: "1.5rem" }}
             >
               {/* Modal Background Glow */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-rose-600/20 blur-[80px] rounded-full pointer-events-none" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-600/20 blur-[80px] rounded-full pointer-events-none" />
 
-              <div className="relative z-10 flex flex-col grow justify-center items-center">
-                <div className="w-full max-w-[320px] text-left">
-                  <h3 className="text-3xl sm:text-[32px] font-black mb-1 sm:mb-2 text-white tracking-tight">
-                    {flowState === "auth" ? "Identification." : "Duration."}
-                  </h3>
-                  <p className="text-[15px] sm:text-[17px] text-white/50 mb-6 sm:mb-8 font-medium whitespace-nowrap">
-                    {flowState === "auth"
-                      ? "Choose how you would like to proceed."
-                      : "Select your preferred session length."}
-                  </p>
-                  <br />
-                </div>
-                {/* Auth Step */}
-                {flowState === "auth" && (
-                  <div className="w-full animate-fade-in-up flex justify-center mt-3 sm:mt-4">
-                    <button
-                      onClick={() => setFlowState("payment")}
-                      className="w-[90%] sm:w-[320px] h-14 sm:h-16 rounded-3xl bg-white text-black text-[16px] sm:text-[18px] font-extrabold shadow-xl hover:scale-[1.02] transition-all duration-300 mx-auto"
-                    >
-                      Continue as Guest
-                    </button>
+              <div className="relative z-10 flex flex-col h-full grow justify-start items-center">
+                <div className="w-full max-w-[340px] flex flex-col grow">
+                  <div className="w-full text-left">
+                    {flowState === "auth" ? <br /> : (
+                      <>
+                        <br />
+                        <br />
+                      </>
+                    )}
+                    <h3 className="text-3xl sm:text-[34px] font-black mb-1 sm:mb-2 text-white tracking-tight">
+                      {flowState === "auth" ? "Identification." : "Duration."}
+                    </h3>
+                    <p className="text-[15px] sm:text-[16px] text-[#A1A1A1] mb-8 font-medium">
+                      {flowState === "auth"
+                        ? "Choose how you would like to proceed."
+                        : "Select your preferred session length."}
+                    </p>
+                    <br />
                   </div>
-                )}
 
-                {/* Payment Step */}
-                {flowState === "payment" && (
-                  <div className="space-y-4 animate-fade-in-up">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                      {TIME_OPTIONS.map((opt) => {
-                        const isSelected = selectedMinutes === opt.minutes;
-                        return (
-                          <button
-                            key={opt.minutes}
-                            onClick={() => handleSelectTime(opt.minutes)}
-                            className={`
-                              flex flex-col items-center justify-center min-h-[72px] sm:min-h-[80px] p-3 rounded-xl border-2 transition-all duration-300
-                              ${isSelected
-                                ? "bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)] scale-[1.02]"
-                                : "bg-transparent text-white/60 border-white/10 hover:border-white/40 hover:scale-[1.01]"
-                              }
-                            `}
-                          >
-                            <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest mb-1 opacity-80">
-                              {opt.label}
-                            </div>
-                            <div className="font-black text-base sm:text-lg leading-none">₹{opt.price}</div>
-                          </button>
-                        );
-                      })}
+                  {/* Auth Step */}
+                  {flowState === "auth" && (
+                    <div className="w-full animate-fade-in-up flex justify-center mt-3 sm:mt-4">
+                      <button
+                        onClick={() => setFlowState("payment")}
+                        className="w-full h-14 sm:h-16 rounded-3xl bg-white text-black text-[16px] sm:text-[18px] font-extrabold shadow-xl hover:scale-[1.02] transition-all duration-300 mx-auto"
+                      >
+                        Continue as Guest
+                      </button>
                     </div>
+                  )}
 
-                    <button
-                      onClick={handlePayAndStart}
-                      disabled={!selectedMinutes}
-                      className={`w-full h-14 rounded-full bg-white text-black text-[15px] font-bold transition-all duration-300 ${!selectedMinutes
-                        ? "opacity-50 grayscale cursor-not-allowed"
-                        : "shadow-[0_0_20px_rgba(244,63,94,0.4)] hover:shadow-[0_0_30px_rgba(244,63,94,0.6)] hover:scale-[1.02]"
-                        }`}
-                    >
-                      Begin Session
-                    </button>
-                  </div>
-                )}
+                  {/* Payment Step */}
+                  {flowState === "payment" && (
+                    <div className="w-full animate-fade-in-up flex flex-col grow">
+                      {/* Duration Grid */}
+                      <div className="grid grid-cols-3 gap-x-4 gap-y-4 mt-4 mb-10">
+                        {TIME_OPTIONS.map((opt, index) => {
+                          const isSelected = selectedMinutes === opt.minutes;
+
+                          return (
+                            <button
+                              key={opt.minutes}
+                              onClick={() => handleSelectTime(opt.minutes)}
+                              className={`
+              h-[78px] rounded-2xl border transition-all duration-300
+              flex flex-col items-center justify-center
+              ${isSelected
+                                  ? "border-white bg-white/10 text-white shadow-lg"
+                                  : "border-white/20 bg-white/[0.02] text-white/70 hover:border-white/50"
+                                }
+              ${index === 3 ? "col-span-1" : ""}
+              ${index === 4 ? "col-span-2" : ""}
+            `}
+                            >
+                              <span className="text-xs uppercase tracking-wider font-semibold mb-1">
+                                {opt.label.toUpperCase()}
+                              </span>
+                              <span className="text-base font-bold">
+                                ₹{opt.price}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <br />
+                      {/* Begin Button */}
+                      <div className="w-full flex justify-center mt-auto mb-2">
+                        <button
+                          onClick={handlePayAndStart}
+                          disabled={!selectedMinutes}
+                          className={`
+          w-[90%] sm:w-[320px] h-[64px] rounded-2xl font-semibold text-lg transition-all duration-500
+          ${selectedMinutes
+                              ? "bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 text-white shadow-[0_10px_40px_rgba(255,80,80,0.35)] hover:scale-[1.02]"
+                              : "bg-white/10 text-white/30 border border-white/10 cursor-not-allowed"
+                            }
+        `}
+                        >
+                          Begin Session
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
