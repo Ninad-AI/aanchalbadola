@@ -6,7 +6,7 @@ import { startStreamingMic, type StreamingMicHandle } from "./utils/audioUtils";
 
 type FlowState = "idle" | "auth" | "payment" | "active";
 
-const WS_URL = "ws://localhost:8000/ws/audio";
+const WS_URL = process.env.NEXT_PUBLIC_BACKEND_WS_URL || "ws://localhost:8000/ws/audio";
 
 function formatTime(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
