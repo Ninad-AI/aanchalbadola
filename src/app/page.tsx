@@ -167,23 +167,18 @@ export default function Home() {
     wsRef.current = ws;
 
     ws.onopen = async () => {
-      console.log("🔗 WS connected, starting PCM stream");
       try {
         const controller = await startStreamingMic(ws, (level) => {
           // Audio level only drives the visual indicator when not in TTS playback
         }, {
           energyThreshold: 0.01,
           silenceMs: 600,
-          onSpeechStart: () => {
-            console.log("🎤 User started speaking (VAD)");
-          },
-          onSpeechEnd: () => {
-            console.log("🎤 User stopped speaking (VAD)");
-          },
+          onSpeechStart: () => { },
+          onSpeechEnd: () => { },
         });
         micControllerRef.current = controller;
       } catch (err) {
-        console.error("Mic start failed:", err);
+        // mic start failed
       }
     };
 
@@ -202,10 +197,9 @@ export default function Home() {
       }
     };
 
-    ws.onerror = (err) => console.error("WebSocket error:", err);
+    ws.onerror = () => { };
 
     ws.onclose = () => {
-      console.log("WS closed");
       setIsSpeaking(false);
     };
 

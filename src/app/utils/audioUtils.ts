@@ -2,8 +2,6 @@
  * Audio utility functions for recording, VAD, and streaming.
  */
 
-const LOG_PREFIX = "[AudioUtils]";
-
 
 /* ── Module-level state for simple record/stop API ── */
 let mediaRecorder: MediaRecorder | null = null;
@@ -23,7 +21,6 @@ export interface RecordingHandle {
  * Start recording audio from the user's microphone.
  */
 export const startRecording = async (): Promise<RecordingHandle> => {
-  console.log(`${LOG_PREFIX} startRecording — requesting mic access…`);
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: {
       echoCancellation: true,
@@ -31,11 +28,9 @@ export const startRecording = async (): Promise<RecordingHandle> => {
       autoGainControl: true,
     },
   });
-  console.log(`${LOG_PREFIX} startRecording — mic stream acquired (tracks: ${stream.getTracks().length})`);
 
   const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
   const audioContext: AudioContext = new AudioContextCtor();
-  console.log(`${LOG_PREFIX} startRecording — AudioContext created (sampleRate: ${audioContext.sampleRate})`);
   const source = audioContext.createMediaStreamSource(stream);
   const analyser = audioContext.createAnalyser();
   analyser.fftSize = 256;
@@ -47,12 +42,10 @@ export const startRecording = async (): Promise<RecordingHandle> => {
   mediaRecorder.ondataavailable = (event: BlobEvent) => {
     if (event.data.size > 0) {
       audioChunks.push(event.data);
-      console.log(`${LOG_PREFIX} startRecording — chunk received (size: ${event.data.size} bytes, total chunks: ${audioChunks.length})`);
     }
   };
 
   mediaRecorder.start();
-  console.log(`${LOG_PREFIX} startRecording — MediaRecorder started`);
 
   return { mediaRecorder, audioContext, analyser };
 };
@@ -64,32 +57,26 @@ export const stopRecording = (
   recorder: MediaRecorder | null,
   audioContext: AudioContext | null,
 ): Promise<Blob | null> => {
-  console.log(`${LOG_PREFIX} stopRecording — called (recorder exists: ${!!recorder})`);
   return new Promise((resolve) => {
     if (!recorder) {
-      console.warn(`${LOG_PREFIX} stopRecording — no active recorder, resolving null`);
       resolve(null);
       return;
     }
 
     recorder.onstop = () => {
       const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-      console.log(`${LOG_PREFIX} stopRecording — blob created (size: ${audioBlob.size} bytes, chunks: ${audioChunks.length})`);
       audioChunks = [];
 
       recorder.stream.getTracks().forEach((track) => track.stop());
-      console.log(`${LOG_PREFIX} stopRecording — stream tracks stopped`);
 
       if (audioContext && audioContext.state !== "closed") {
         audioContext.close();
-        console.log(`${LOG_PREFIX} stopRecording — AudioContext closed`);
       }
 
       resolve(audioBlob);
     };
 
     recorder.stop();
-    console.log(`${LOG_PREFIX} stopRecording — MediaRecorder.stop() called`);
   });
 };
 
@@ -101,15 +88,12 @@ export const stopRecording = (
  * Convert audio blob to base64 data-URL string.
  */
 export const blobToBase64 = (blob: Blob): Promise<string> => {
-  console.log(`${LOG_PREFIX} blobToBase64 — converting blob (size: ${blob.size} bytes, type: ${blob.type})`);
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      console.log(`${LOG_PREFIX} blobToBase64 — conversion complete (base64 length: ${(reader.result as string)?.length ?? 0})`);
       resolve(reader.result as string);
     };
     reader.onerror = (err) => {
-      console.error(`${LOG_PREFIX} blobToBase64 — FileReader error`, err);
       reject(err);
     };
     reader.readAsDataURL(blob);
@@ -160,8 +144,6 @@ export const recordUtteranceWithVAD = async ({
   noInputTimeoutMs = 5000,
   onAudioLevel,
 }: VADOptions = {}): Promise<Blob | null> => {
-  console.log(`${LOG_PREFIX} VAD — starting (maxDuration: ${maxDurationMs}ms, threshold: ${energyThreshold}, silenceAfter: ${silenceAfterSpeechMs}ms, noInputTimeout: ${noInputTimeoutMs}ms)`);
-
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: {
       echoCancellation: true,
@@ -169,7 +151,6 @@ export const recordUtteranceWithVAD = async ({
       autoGainControl: true,
     },
   });
-  console.log(`${LOG_PREFIX} VAD — mic stream acquired`);
 
   const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
   const audioContext: AudioContext = new AudioContextCtor();
@@ -187,7 +168,6 @@ export const recordUtteranceWithVAD = async ({
   };
   // Small timeslice so we flush data regularly
   recorder.start(100);
-  console.log(`${LOG_PREFIX} VAD — MediaRecorder started (timeslice: 100ms)`);
 
   const dataArray = new Uint8Array(analyser.fftSize);
   const startTime = performance.now();
@@ -200,7 +180,6 @@ export const recordUtteranceWithVAD = async ({
 
   return new Promise<Blob | null>((resolve, reject) => {
     const cleanup = () => {
-      console.log(`${LOG_PREFIX} VAD — cleanup: stopping tracks & closing AudioContext`);
       try {
         stream.getTracks().forEach((t) => t.stop());
       } catch (_) {
@@ -212,24 +191,20 @@ export const recordUtteranceWithVAD = async ({
     };
 
     const finishWithBlob = () => {
-      console.log(`${LOG_PREFIX} VAD — finishing with speech blob (chunks: ${chunks.length})`);
       recorder.onstop = () => {
         const blob = new Blob(chunks, { type: "audio/webm" });
-        console.log(`${LOG_PREFIX} VAD — blob created (size: ${blob.size} bytes)`);
         cleanup();
         resolve(blob);
       };
       try {
         recorder.stop();
       } catch (err) {
-        console.error(`${LOG_PREFIX} VAD — error stopping recorder`, err);
         cleanup();
         reject(err);
       }
     };
 
     const finishNoSpeech = () => {
-      console.warn(`${LOG_PREFIX} VAD — no speech detected within ${noInputTimeoutMs}ms, finishing with null`);
       try {
         recorder.stop();
       } catch (_) {
@@ -269,9 +244,6 @@ export const recordUtteranceWithVAD = async ({
       }
 
       if (rms >= threshold) {
-        if (!speechStarted) {
-          console.log(`${LOG_PREFIX} VAD — speech detected (rms: ${rms.toFixed(4)}, threshold: ${threshold.toFixed(4)}, elapsed: ${elapsed.toFixed(0)}ms)`);
-        }
         speechStarted = true;
         lastSpeechTime = now;
       }
@@ -289,12 +261,10 @@ export const recordUtteranceWithVAD = async ({
 
         const silenceElapsed = now - (lastSpeechTime ?? now);
         if (silenceElapsed >= silenceAfterSpeechMs) {
-          console.log(`${LOG_PREFIX} VAD — trailing silence reached (${silenceElapsed.toFixed(0)}ms >= ${silenceAfterSpeechMs}ms)`);
           finishWithBlob();
           return;
         }
         if (elapsed >= maxDurationMs) {
-          console.log(`${LOG_PREFIX} VAD — max duration reached (${elapsed.toFixed(0)}ms >= ${maxDurationMs}ms)`);
           finishWithBlob();
           return;
         }
@@ -346,8 +316,6 @@ export const startStreamingMic = async (
     onSpeechEnd,
   } = options;
 
-  console.log(`${LOG_PREFIX} startStreamingMic — requesting mic for PCM16 streaming… (energyThreshold: ${energyThreshold}, silenceMs: ${silenceMs})`);
-
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: {
       echoCancellation: true,
@@ -355,17 +323,13 @@ export const startStreamingMic = async (
       autoGainControl: true,
     },
   });
-  console.log(`${LOG_PREFIX} startStreamingMic — mic stream acquired`);
 
   const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
   const audioContext: AudioContext = new AudioContextCtor({ sampleRate: 48000 });
-  console.log(`${LOG_PREFIX} startStreamingMic — AudioContext created (sampleRate: ${audioContext.sampleRate}, state: ${audioContext.state})`);
 
   // MUST resume after user gesture
   if (audioContext.state === "suspended") {
-    console.log(`${LOG_PREFIX} startStreamingMic — AudioContext suspended, resuming…`);
     await audioContext.resume();
-    console.log(`${LOG_PREFIX} startStreamingMic — AudioContext resumed`);
   }
 
   const source = audioContext.createMediaStreamSource(stream);
@@ -374,7 +338,6 @@ export const startStreamingMic = async (
   // Connect the graph
   source.connect(processor);
   processor.connect(audioContext.destination);
-  console.log(`${LOG_PREFIX} startStreamingMic — audio graph connected, streaming PCM16 frames to WebSocket`);
 
   /* ── VAD state ── */
   let framesSent = 0;
@@ -429,7 +392,6 @@ export const startStreamingMic = async (
       if (!isSpeaking) {
         isSpeaking = true;
         ws.send(JSON.stringify({ type: "speech_start" }));
-        console.log(`${LOG_PREFIX} startStreamingMic — speech_start sent (rms: ${rms.toFixed(4)}, threshold: ${threshold.toFixed(4)})`);
         if (typeof onSpeechStart === "function") onSpeechStart();
       }
     } else if (isSpeaking) {
@@ -437,7 +399,6 @@ export const startStreamingMic = async (
       if (silenceElapsed >= silenceMs) {
         isSpeaking = false;
         ws.send(JSON.stringify({ type: "speech_end" }));
-        console.log(`${LOG_PREFIX} startStreamingMic — speech_end sent (silence: ${silenceElapsed.toFixed(0)}ms)`);
         if (typeof onSpeechEnd === "function") onSpeechEnd();
       }
     }
@@ -460,11 +421,6 @@ export const startStreamingMic = async (
       }
     }
 
-    // Log every ~5 seconds (approx 250 process events at 48 kHz / 1024 buffer)
-    if (framesSent > 0 && framesSent % 250 === 0) {
-      console.log(`${LOG_PREFIX} startStreamingMic — ${framesSent} PCM16 frames sent`);
-    }
-
     // ── Optional audio level callback ──
     if (typeof onAudioLevel === "function") {
       onAudioLevel(Math.min(rms * 8, 1));
@@ -473,18 +429,15 @@ export const startStreamingMic = async (
 
   return {
     stop: () => {
-      console.log(`${LOG_PREFIX} startStreamingMic — stop() called (total frames sent: ${framesSent})`);
       // If still speaking when stopped, send a final speech_end
       if (isSpeaking && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "speech_end" }));
-        console.log(`${LOG_PREFIX} startStreamingMic — final speech_end sent on stop`);
         if (typeof onSpeechEnd === "function") onSpeechEnd();
       }
       processor.disconnect();
       source.disconnect();
       stream.getTracks().forEach((t) => t.stop());
       audioContext.close();
-      console.log(`${LOG_PREFIX} startStreamingMic — all resources released`);
     },
   };
 };
