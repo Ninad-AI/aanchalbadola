@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
+import { startStreamingMic, type StreamingMicHandle } from "./utils/audioUtils";
 
 type FlowState = "idle" | "auth" | "payment" | "active";
+
+const WS_URL = "ws://localhost:8000/ws/audio";
 
 function formatTime(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
@@ -35,6 +38,13 @@ export default function Home() {
   const mousePosRef = useRef({ x: 0, y: 0 });
   const mouseTargetRef = useRef({ x: 0, y: 0 });
   const avatarRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  /* ── Audio streaming refs ── */
+  const wsRef = useRef<WebSocket | null>(null);
+  const micControllerRef = useRef<StreamingMicHandle | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const playHeadRef = useRef(0);
+  const sourceEndPromisesRef = useRef<Promise<void>[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* ── Entrance animation + mouse-follow parallax ── */
@@ -94,14 +104,123 @@ export default function Home() {
     };
   }, [flowState, timeLeft]);
 
-  /* ── Simulated speech activity ── */
+  /* ── Audio context helpers ── */
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+      audioContextRef.current = new AudioContextCtor();
+      playHeadRef.current = audioContextRef.current.currentTime;
+      sourceEndPromisesRef.current = [];
+    }
+    return audioContextRef.current;
+  }, []);
+
+  const scheduleBuffer = useCallback(
+    (buffer: AudioBuffer) => {
+      const audioCtx = getAudioContext();
+      const src = audioCtx.createBufferSource();
+      src.buffer = buffer;
+      src.connect(audioCtx.destination);
+
+      const endPromise = new Promise<void>((resolve) => {
+        src.onended = () => resolve();
+      });
+      sourceEndPromisesRef.current.push(endPromise);
+
+      if (playHeadRef.current < audioCtx.currentTime) {
+        playHeadRef.current = audioCtx.currentTime;
+      }
+
+      src.start(playHeadRef.current);
+      playHeadRef.current += buffer.duration;
+    },
+    [getAudioContext],
+  );
+
+  const processBinaryChunk = useCallback(
+    (arrayBuffer: ArrayBuffer) => {
+      // Backend sends PCM16 (Int16)
+      const int16 = new Int16Array(arrayBuffer);
+
+      // Convert Int16 → Float32 for Web Audio API
+      const float32 = new Float32Array(int16.length);
+      for (let i = 0; i < int16.length; i++) {
+        float32[i] = int16[i] / 32768;
+      }
+
+      const sampleRate = 16000; // Must match backend TTS
+      const audioCtx = getAudioContext();
+      const buffer = audioCtx.createBuffer(1, float32.length, sampleRate);
+      buffer.copyToChannel(float32, 0, 0);
+
+      scheduleBuffer(buffer);
+    },
+    [getAudioContext, scheduleBuffer],
+  );
+
+  /* ── WebSocket audio streaming when active ── */
   useEffect(() => {
     if (flowState !== "active") return;
-    const interval = setInterval(() => {
-      if (Math.random() > 0.6) setIsSpeaking((prev) => !prev);
-    }, 400);
-    return () => clearInterval(interval);
-  }, [flowState]);
+
+    const ws = new WebSocket(WS_URL);
+    ws.binaryType = "arraybuffer";
+    wsRef.current = ws;
+
+    ws.onopen = async () => {
+      console.log("🔗 WS connected, starting PCM stream");
+      try {
+        const controller = await startStreamingMic(ws, (level) => {
+          // Audio level only drives the visual indicator when not in TTS playback
+        }, {
+          energyThreshold: 0.01,
+          silenceMs: 600,
+          onSpeechStart: () => {
+            console.log("🎤 User started speaking (VAD)");
+          },
+          onSpeechEnd: () => {
+            console.log("🎤 User stopped speaking (VAD)");
+          },
+        });
+        micControllerRef.current = controller;
+      } catch (err) {
+        console.error("Mic start failed:", err);
+      }
+    };
+
+    ws.onmessage = (event: MessageEvent) => {
+      if (event.data instanceof ArrayBuffer) {
+        processBinaryChunk(event.data);
+      } else {
+        // JSON control messages (tts_start, tts_end, etc.)
+        try {
+          const msg = JSON.parse(event.data as string);
+          if (msg.type === "tts_start") setIsSpeaking(true);
+          if (msg.type === "tts_end") setIsSpeaking(false);
+        } catch {
+          /* ignore non-JSON */
+        }
+      }
+    };
+
+    ws.onerror = (err) => console.error("WebSocket error:", err);
+
+    ws.onclose = () => {
+      console.log("WS closed");
+      setIsSpeaking(false);
+    };
+
+    return () => {
+      // Cleanup on flowState change / unmount
+      if (micControllerRef.current) {
+        micControllerRef.current.stop();
+        micControllerRef.current = null;
+      }
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close();
+      }
+      wsRef.current = null;
+    };
+  }, [flowState, processBinaryChunk]);
 
   const handleStartTalking = () => setFlowState("auth");
   const handleSelectTime = (minutes: number) => setSelectedMinutes(minutes);
@@ -114,9 +233,30 @@ export default function Home() {
 
   const handleEndCall = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
+
+    // Stop mic streaming
+    if (micControllerRef.current) {
+      micControllerRef.current.stop();
+      micControllerRef.current = null;
+    }
+
+    // Close WebSocket
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    // Close playback audio context
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    sourceEndPromisesRef.current = [];
+
     setFlowState("idle");
     setTimeLeft(0);
     setSelectedMinutes(null);
+    setIsSpeaking(false);
   }, []);
 
   return (
@@ -400,11 +540,10 @@ export default function Home() {
                               className={`
               h-[78px] rounded-2xl border transition-all duration-300
               flex flex-col items-center justify-center
-              ${
-                isSelected
-                  ? "border-white bg-white/10 text-white shadow-lg"
-                  : "border-white/20 bg-white/[0.02] text-white/70 hover:border-white/50"
-              }
+              ${isSelected
+                                  ? "border-white bg-white/10 text-white shadow-lg"
+                                  : "border-white/20 bg-white/[0.02] text-white/70 hover:border-white/50"
+                                }
               ${index === 3 ? "col-span-1" : ""}
               ${index === 4 ? "col-span-2" : ""}
             `}
@@ -428,11 +567,10 @@ export default function Home() {
                           disabled={!selectedMinutes}
                           className={`
           w-[90%] sm:w-[320px] h-[64px] rounded-2xl font-semibold text-lg transition-all duration-500
-          ${
-            selectedMinutes
-              ? "bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 text-white shadow-[0_10px_40px_rgba(255,80,80,0.35)] hover:scale-[1.02]"
-              : "bg-white/10 text-white/30 border border-white/10 cursor-not-allowed"
-          }
+          ${selectedMinutes
+                              ? "bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 text-white shadow-[0_10px_40px_rgba(255,80,80,0.35)] hover:scale-[1.02]"
+                              : "bg-white/10 text-white/30 border border-white/10 cursor-not-allowed"
+                            }
         `}
                         >
                           Begin Session
