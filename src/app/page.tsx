@@ -39,6 +39,7 @@ export default function Home() {
   const micControllerRef = useRef<StreamingMicHandle | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const playHeadRef = useRef(0);
+  const sourceNodesRef = useRef<AudioBufferSourceNode[]>([]);
   const sourceEndPromisesRef = useRef<Promise<void>[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -79,26 +80,6 @@ export default function Home() {
     };
   }, []);
 
-  /* ── Countdown timer ── */
-  useEffect(() => {
-    if (flowState !== "active" || timeLeft <= 0) return;
-
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          setFlowState("idle");
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [flowState, timeLeft]);
-
   /* ── Audio context helpers ── */
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
@@ -118,9 +99,13 @@ export default function Home() {
       src.connect(audioCtx.destination);
 
       const endPromise = new Promise<void>((resolve) => {
-        src.onended = () => resolve();
+        src.onended = () => {
+          sourceNodesRef.current = sourceNodesRef.current.filter((node) => node !== src);
+          resolve();
+        };
       });
       sourceEndPromisesRef.current.push(endPromise);
+      sourceNodesRef.current.push(src);
 
       if (playHeadRef.current < audioCtx.currentTime) {
         playHeadRef.current = audioCtx.currentTime;
@@ -131,6 +116,25 @@ export default function Home() {
     },
     [getAudioContext],
   );
+
+  const stopPlaybackImmediately = useCallback(() => {
+    sourceNodesRef.current.forEach((node) => {
+      try {
+        node.stop(0);
+      } catch {
+        // ignore nodes already ended/stopped
+      }
+    });
+    sourceNodesRef.current = [];
+    sourceEndPromisesRef.current = [];
+
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+
+    playHeadRef.current = 0;
+  }, []);
 
   const processBinaryChunk = useCallback(
     (arrayBuffer: ArrayBuffer) => {
@@ -215,8 +219,9 @@ export default function Home() {
         ws.close();
       }
       wsRef.current = null;
+      stopPlaybackImmediately();
     };
-  }, [flowState, processBinaryChunk]);
+  }, [flowState, processBinaryChunk, stopPlaybackImmediately]);
 
   const handleStartTalking = () => setFlowState("auth");
   const handleSelectTime = (minutes: number) => setSelectedMinutes(minutes);
@@ -242,19 +247,34 @@ export default function Home() {
       wsRef.current = null;
     }
 
-    // Close playback audio context
-    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-    sourceEndPromisesRef.current = [];
+    stopPlaybackImmediately();
 
     setFlowState("idle");
     setTimeLeft(0);
     setSelectedMinutes(null);
     setIsWsConnected(false);
     setIsSpeaking(false);
-  }, []);
+  }, [stopPlaybackImmediately]);
+
+  /* ── Countdown timer ── */
+  useEffect(() => {
+    if (flowState !== "active" || timeLeft <= 0) return;
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          handleEndCall();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [flowState, timeLeft, handleEndCall]);
 
   const callStatusLabel = !isWsConnected
     ? "Connecting..."
