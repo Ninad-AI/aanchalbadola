@@ -499,7 +499,7 @@ export default function Home() {
                 <div className="w-full max-w-[340px] flex flex-col justify-center">
 
                   <div
-                    className={`text-left ${flowState === "auth" ? "w-[90%] sm:w-[320px] mx-auto" : "w-full"}`}
+                    className={`text-left w-[90%] sm:w-[320px] mx-auto pl-4 pr-2 sm:pl-6 sm:pr-4 ${flowState === "auth" ? "translate-x-4 sm:translate-x-0" : ""}`}
                   >
                     <h3 className="text-[30px] sm:text-[32px] md:text-[34px] font-black mb-1.5 sm:mb-2 text-white tracking-tight leading-tight">
                       {flowState === "auth" ? "Identification." : "Duration."}
@@ -528,7 +528,7 @@ export default function Home() {
                   {flowState === "payment" && (
                     <div className="w-full animate-fade-in-up flex flex-col gap-6 mt-2">
                       {/* Duration Grid — 6-col so top row is 3×2 and bottom row is 2×3 (equal halves) */}
-                      <div className="grid grid-cols-6 gap-x-3 gap-y-3 sm:gap-x-4 sm:gap-y-4">
+                      <div className="w-full max-w-[300px] sm:max-w-[320px] mx-auto grid grid-cols-6 gap-x-2 gap-y-2 sm:gap-x-2.5 sm:gap-y-2.5">
                         {TIME_OPTIONS.map((opt, index) => {
                           const isSelected = selectedMinutes === opt.minutes;
                           const colSpan = index < 3 ? "col-span-2" : "col-span-3";
@@ -538,7 +538,7 @@ export default function Home() {
                               key={opt.minutes}
                               onClick={() => handleSelectTime(opt.minutes)}
                               className={`
-                                ${colSpan} h-[78px] rounded-2xl border transition-all duration-300
+                                ${colSpan} h-[62px] sm:h-[68px] rounded-xl sm:rounded-2xl border transition-all duration-300
                                 flex flex-col items-center justify-center
                                 ${isSelected
                                   ? "border-white bg-white/10 text-white shadow-lg"
@@ -546,10 +546,10 @@ export default function Home() {
                                 }
                               `}
                             >
-                              <span className="text-xs uppercase tracking-wider font-semibold mb-1">
+                              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold mb-0.5">
                                 {opt.label.toUpperCase()}
                               </span>
-                              <span className="text-base font-bold">
+                              <span className="text-xs sm:text-sm font-bold leading-none">
                                 ₹{opt.price}
                               </span>
                             </button>
