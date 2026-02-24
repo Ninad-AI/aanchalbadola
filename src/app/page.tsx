@@ -5,7 +5,7 @@ import Image from "next/image";
 import { startStreamingMic, type StreamingMicHandle } from "./utils/audioUtils";
 
 type FlowState = "idle" | "auth" | "payment" | "active";
-type CallPhase = "connecting" | "listening" | "processing" | "speaking";
+type CallPhase = "connecting" | "listening" | "speaking";
 
 const WS_URL = process.env.NEXT_PUBLIC_BACKEND_WS_URL || "ws://localhost:8000/ws/audio";
 
@@ -44,6 +44,7 @@ export default function Home() {
   const sourceNodesRef = useRef<AudioBufferSourceNode[]>([]);
   const sourceEndPromisesRef = useRef<Promise<void>[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const ttsActiveRef = useRef(false);
 
   /* ── Entrance animation + mouse-follow parallax ── */
   useEffect(() => {
@@ -174,6 +175,7 @@ export default function Home() {
     ws.onopen = async () => {
       setIsWsConnected(true);
       setCallPhase("listening");
+      ttsActiveRef.current = false;
       try {
         const controller = await startStreamingMic(ws, (level) => {
           // Audio level only drives the visual indicator when not in TTS playback
@@ -181,10 +183,17 @@ export default function Home() {
           energyThreshold: 0.01,
           silenceMs: 600,
           onSpeechStart: () => {
-            setCallPhase("listening");
+            // Only update when model is NOT speaking (prevents echo triggering)
+            if (!ttsActiveRef.current) {
+              setCallPhase("listening");
+            }
           },
           onSpeechEnd: () => {
-            setCallPhase("processing");
+            // User stopped speaking; stay on "listening" until model responds
+            // Only update when model is NOT speaking (prevents echo triggering)
+            if (!ttsActiveRef.current) {
+              setCallPhase("listening");
+            }
           },
         });
         micControllerRef.current = controller;
@@ -195,6 +204,7 @@ export default function Home() {
 
     ws.onmessage = (event: MessageEvent) => {
       if (event.data instanceof ArrayBuffer) {
+        ttsActiveRef.current = true;
         setIsSpeaking(true);
         setCallPhase("speaking");
         processBinaryChunk(event.data);
@@ -203,12 +213,25 @@ export default function Home() {
         try {
           const msg = JSON.parse(event.data as string);
           if (msg.type === "tts_start") {
+            ttsActiveRef.current = true;
             setIsSpeaking(true);
             setCallPhase("speaking");
           }
           if (msg.type === "tts_end") {
-            setIsSpeaking(false);
-            setCallPhase("listening");
+            // Wait for all scheduled audio buffers to finish playing
+            // before transitioning back to listening
+            const pendingPromises = [...sourceEndPromisesRef.current];
+            if (pendingPromises.length > 0) {
+              Promise.all(pendingPromises).then(() => {
+                ttsActiveRef.current = false;
+                setIsSpeaking(false);
+                setCallPhase("listening");
+              });
+            } else {
+              ttsActiveRef.current = false;
+              setIsSpeaking(false);
+              setCallPhase("listening");
+            }
           }
         } catch {
           /* ignore non-JSON */
@@ -237,6 +260,7 @@ export default function Home() {
         ws.close();
       }
       wsRef.current = null;
+      ttsActiveRef.current = false;
       stopPlaybackImmediately();
     };
   }, [flowState, processBinaryChunk, stopPlaybackImmediately]);
@@ -266,6 +290,7 @@ export default function Home() {
     }
 
     stopPlaybackImmediately();
+    ttsActiveRef.current = false;
 
     setFlowState("idle");
     setTimeLeft(0);
@@ -297,12 +322,10 @@ export default function Home() {
 
   const callStatusLabel =
     callPhase === "speaking"
-        ? "Speaking..."
-        : callPhase === "listening"
-          ? "Listening..."
-        : callPhase === "processing"
-          ? "Listening..."
-          : "Connecting...";
+      ? "Speaking..."
+      : callPhase === "listening"
+        ? "Listening..."
+        : "Connecting...";
 
   const timerMinutes = Math.floor(timeLeft / 60);
   const timerSeconds = timeLeft % 60;
