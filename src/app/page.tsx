@@ -498,9 +498,7 @@ export default function Home() {
               <div className="relative z-10 flex flex-col h-full justify-center items-center">
                 <div className="w-full max-w-[340px] flex flex-col justify-center">
 
-                  <div
-                    className={`text-left w-[90%] sm:w-[320px] mx-auto pl-4 pr-2 sm:pl-6 sm:pr-4 ${flowState === "auth" ? "translate-x-4 sm:translate-x-0" : ""}`}
-                  >
+                  <div className="text-left w-[90%] sm:w-[320px] mx-auto pl-4 pr-2 sm:pl-6 sm:pr-4 translate-x-4 sm:translate-x-0">
                     <h3 className="text-[30px] sm:text-[32px] md:text-[34px] font-black mb-1.5 sm:mb-2 text-white tracking-tight leading-tight">
                       {flowState === "auth" ? "Identification." : "Duration."}
                     </h3>
@@ -526,9 +524,9 @@ export default function Home() {
 
                   {/* Payment Step */}
                   {flowState === "payment" && (
-                    <div className="w-full animate-fade-in-up flex flex-col gap-6 mt-2">
+                    <div className="w-full animate-fade-in-up flex flex-col items-center gap-4 sm:gap-5 mt-1 sm:mt-2">
                       {/* Duration Grid — 6-col so top row is 3×2 and bottom row is 2×3 (equal halves) */}
-                      <div className="w-full max-w-[300px] sm:max-w-[320px] mx-auto grid grid-cols-6 gap-x-2 gap-y-2 sm:gap-x-2.5 sm:gap-y-2.5">
+                      <div className="w-[86%] sm:w-full max-w-[280px] sm:max-w-[320px] self-center grid grid-cols-6 gap-x-2.5 gap-y-2.5 sm:gap-x-3 sm:gap-y-3">
                         {TIME_OPTIONS.map((opt, index) => {
                           const isSelected = selectedMinutes === opt.minutes;
                           const colSpan = index < 3 ? "col-span-2" : "col-span-3";
@@ -558,12 +556,12 @@ export default function Home() {
                       </div>
 
                       {/* Begin Button */}
-                      <div className="w-full flex justify-center">
+                      <div className="w-full flex justify-center pt-1 sm:pt-2">
                         <button
                           onClick={handlePayAndStart}
                           disabled={!selectedMinutes}
                           className={`
-                            w-[90%] sm:w-[320px] h-[64px] rounded-2xl font-semibold text-lg transition-all duration-500
+                            w-[86%] sm:w-[320px] h-[64px] rounded-2xl font-semibold text-lg transition-all duration-500
                             ${selectedMinutes
                               ? "bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 text-white shadow-[0_10px_40px_rgba(255,80,80,0.35)] hover:scale-[1.02]"
                               : "bg-white/10 text-white/30 border border-white/10 cursor-not-allowed"
