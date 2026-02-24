@@ -274,7 +274,7 @@ export default function Home() {
       {/* ── Content ── */}
       <div
         className={`
-          relative z-10 w-full min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-8
+          relative z-10 w-full min-h-screen flex flex-col items-center justify-center px-6 sm:px-10 py-16 sm:py-20
           transition-all duration-1000 ease-out
           ${isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"}
         `}
@@ -367,7 +367,7 @@ export default function Home() {
           </div>
         ) : (
           /* ── Idle Hero ── */
-          <div className="relative w-full max-w-6xl mx-auto min-h-[80vh] flex flex-col md:flex-row items-center justify-center md:justify-between gap-8 md:gap-12 px-4 sm:px-8">
+          <div className="relative w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-8 md:gap-16">
             {/* Text Content */}
             <div className="relative z-20 flex flex-col items-center md:items-start text-center md:text-left">
               <h2 className="text-[10px] sm:text-sm md:text-base text-rose-300 font-bold tracking-[0.15em] sm:tracking-[0.2em] uppercase mb-3 sm:mb-4 animate-fade-in-up">
@@ -471,40 +471,42 @@ export default function Home() {
       {/* ── Auth / Payment Modal ── */}
       {(flowState === "auth" || flowState === "payment") && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-xl transition-all duration-500"
             onClick={() => setFlowState("idle")}
           />
 
-          <div className="relative w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md animate-fade-in-up">
+          {/* Modal Card */}
+          <div className="relative w-[88vw] max-w-[360px] sm:w-full sm:max-w-md animate-fade-in-up">
             <div
-              className={`relative bg-black/80 backdrop-blur-3xl border border-white/10 px-6 sm:px-8 shadow-2xl flex flex-col justify-center ${flowState === "payment" ? "p-6 sm:p-8 md:p-10 min-h-[400px] sm:min-h-[440px]" : "py-10 sm:py-12 md:py-14 min-h-[180px] sm:min-h-[220px]"}`}
+              className={`
+                relative bg-black/80 backdrop-blur-3xl border border-white/10 shadow-2xl
+                flex flex-col justify-center overflow-hidden
+                px-6 sm:px-8
+                ${flowState === "payment"
+                  ? "p-6 sm:p-8 md:p-10 min-h-[400px] sm:min-h-[440px]"
+                  : "py-10 sm:py-12 md:py-14 min-h-[180px] sm:min-h-[220px]"
+                }
+              `}
               style={{ borderRadius: "1.5rem" }}
             >
               {/* Modal Background Glow */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-rose-600/20 blur-[80px] rounded-full pointer-events-none" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-600/20 blur-[80px] rounded-full pointer-events-none" />
 
-              <div className="relative z-10 flex flex-col h-full grow justify-start items-center">
-                <div className="w-full max-w-[340px] flex flex-col grow">
+              <div className="relative z-10 flex flex-col h-full justify-center items-center">
+                <div className="w-full max-w-[340px] flex flex-col justify-center">
+
                   <div className="w-full text-left">
-                    {flowState === "auth" ? (
-                      <br />
-                    ) : (
-                      <>
-                        <br />
-                        <br />
-                      </>
-                    )}
                     <h3 className="text-3xl sm:text-[34px] font-black mb-1 sm:mb-2 text-white tracking-tight">
                       {flowState === "auth" ? "Identification." : "Duration."}
                     </h3>
-                    <p className="text-[15px] sm:text-[16px] text-[#A1A1A1] mb-8 font-medium">
+                    <p className="text-[15px] sm:text-[16px] text-[#A1A1A1] mb-10 sm:mb-11 font-medium">
                       {flowState === "auth"
                         ? "Choose how you would like to proceed."
                         : "Select your preferred session length."}
                     </p>
-                    <br />
                   </div>
 
                   {/* Auth Step */}
@@ -512,7 +514,7 @@ export default function Home() {
                     <div className="w-full animate-fade-in-up flex justify-center mt-3 sm:mt-4">
                       <button
                         onClick={() => setFlowState("payment")}
-                        className="w-full h-14 sm:h-16 rounded-3xl bg-white text-black text-[16px] sm:text-[18px] font-extrabold shadow-xl hover:scale-[1.02] transition-all duration-300 mx-auto"
+                        className="w-[82%] sm:w-[280px] h-14 sm:h-16 rounded-3xl bg-white text-black text-[16px] sm:text-[18px] font-extrabold shadow-xl hover:scale-[1.02] transition-all duration-300 mx-auto"
                       >
                         Continue as Guest
                       </button>
@@ -521,26 +523,25 @@ export default function Home() {
 
                   {/* Payment Step */}
                   {flowState === "payment" && (
-                    <div className="w-full animate-fade-in-up flex flex-col grow">
-                      {/* Duration Grid */}
-                      <div className="grid grid-cols-3 gap-x-4 gap-y-4 mt-4 mb-10">
+                    <div className="w-full animate-fade-in-up flex flex-col gap-6 mt-2">
+                      {/* Duration Grid — 6-col so top row is 3×2 and bottom row is 2×3 (equal halves) */}
+                      <div className="grid grid-cols-6 gap-x-3 gap-y-3 sm:gap-x-4 sm:gap-y-4">
                         {TIME_OPTIONS.map((opt, index) => {
                           const isSelected = selectedMinutes === opt.minutes;
+                          const colSpan = index < 3 ? "col-span-2" : "col-span-3";
 
                           return (
                             <button
                               key={opt.minutes}
                               onClick={() => handleSelectTime(opt.minutes)}
                               className={`
-              h-[78px] rounded-2xl border transition-all duration-300
-              flex flex-col items-center justify-center
-              ${isSelected
+                                ${colSpan} h-[78px] rounded-2xl border transition-all duration-300
+                                flex flex-col items-center justify-center
+                                ${isSelected
                                   ? "border-white bg-white/10 text-white shadow-lg"
                                   : "border-white/20 bg-white/[0.02] text-white/70 hover:border-white/50"
                                 }
-              ${index === 3 ? "col-span-1" : ""}
-              ${index === 4 ? "col-span-2" : ""}
-            `}
+                              `}
                             >
                               <span className="text-xs uppercase tracking-wider font-semibold mb-1">
                                 {opt.label.toUpperCase()}
@@ -553,19 +554,18 @@ export default function Home() {
                         })}
                       </div>
 
-                      <br />
                       {/* Begin Button */}
-                      <div className="w-full flex justify-center mt-auto mb-2">
+                      <div className="w-full flex justify-center">
                         <button
                           onClick={handlePayAndStart}
                           disabled={!selectedMinutes}
                           className={`
-          w-[90%] sm:w-[320px] h-[64px] rounded-2xl font-semibold text-lg transition-all duration-500
-          ${selectedMinutes
+                            w-[90%] sm:w-[320px] h-[64px] rounded-2xl font-semibold text-lg transition-all duration-500
+                            ${selectedMinutes
                               ? "bg-gradient-to-r from-pink-500 via-red-500 to-orange-500 text-white shadow-[0_10px_40px_rgba(255,80,80,0.35)] hover:scale-[1.02]"
                               : "bg-white/10 text-white/30 border border-white/10 cursor-not-allowed"
                             }
-        `}
+                          `}
                         >
                           Begin Session
                         </button>
