@@ -498,15 +498,18 @@ export default function Home() {
               <div className="relative z-10 flex flex-col h-full justify-center items-center">
                 <div className="w-full max-w-[340px] flex flex-col justify-center">
 
-                  <div className="w-full text-left">
-                    <h3 className="text-3xl sm:text-[34px] font-black mb-1 sm:mb-2 text-white tracking-tight">
+                  <div
+                    className={`text-left ${flowState === "auth" ? "w-[90%] sm:w-[320px] mx-auto" : "w-full"}`}
+                  >
+                    <h3 className="text-[30px] sm:text-[32px] md:text-[34px] font-black mb-1.5 sm:mb-2 text-white tracking-tight leading-tight">
                       {flowState === "auth" ? "Identification." : "Duration."}
                     </h3>
-                    <p className="text-[15px] sm:text-[16px] text-[#A1A1A1] mb-10 sm:mb-11 font-medium">
+                    <p className="text-[14px] sm:text-[15px] md:text-[16px] text-[#A1A1A1] mb-8 sm:mb-9 font-medium leading-snug">
                       {flowState === "auth"
                         ? "Choose how you would like to proceed."
                         : "Select your preferred session length."}
                     </p>
+                    <br />
                   </div>
 
                   {/* Auth Step */}
@@ -514,7 +517,7 @@ export default function Home() {
                     <div className="w-full animate-fade-in-up flex justify-center mt-3 sm:mt-4">
                       <button
                         onClick={() => setFlowState("payment")}
-                        className="w-[82%] sm:w-[280px] h-14 sm:h-16 rounded-3xl bg-white text-black text-[16px] sm:text-[18px] font-extrabold shadow-xl hover:scale-[1.02] transition-all duration-300 mx-auto"
+                        className="w-[90%] sm:w-[320px] h-14 sm:h-16 rounded-3xl bg-white text-black text-[16px] sm:text-[18px] font-extrabold shadow-xl hover:scale-[1.02] transition-all duration-300 mx-auto"
                       >
                         Continue as Guest
                       </button>
