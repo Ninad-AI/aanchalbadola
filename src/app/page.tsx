@@ -1,18 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, type CSSProperties } from "react";
 import Image from "next/image";
 import { startStreamingMic, type StreamingMicHandle } from "./utils/audioUtils";
 
 type FlowState = "idle" | "auth" | "payment" | "active";
 
 const WS_URL = process.env.NEXT_PUBLIC_BACKEND_WS_URL || "ws://localhost:8000/ws/audio";
-
-function formatTime(totalSeconds: number): string {
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
-  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-}
 
 const CREATOR = {
   name: "Aanchal Badola",
@@ -33,6 +27,7 @@ export default function Home() {
   const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isWsConnected, setIsWsConnected] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
   const mousePosRef = useRef({ x: 0, y: 0 });
@@ -162,11 +157,15 @@ export default function Home() {
   useEffect(() => {
     if (flowState !== "active") return;
 
+    setIsWsConnected(false);
+    setIsSpeaking(false);
+
     const ws = new WebSocket(WS_URL);
     ws.binaryType = "arraybuffer";
     wsRef.current = ws;
 
     ws.onopen = async () => {
+      setIsWsConnected(true);
       try {
         const controller = await startStreamingMic(ws, (level) => {
           // Audio level only drives the visual indicator when not in TTS playback
@@ -197,9 +196,12 @@ export default function Home() {
       }
     };
 
-    ws.onerror = () => { };
+    ws.onerror = () => {
+      setIsWsConnected(false);
+    };
 
     ws.onclose = () => {
+      setIsWsConnected(false);
       setIsSpeaking(false);
     };
 
@@ -250,8 +252,20 @@ export default function Home() {
     setFlowState("idle");
     setTimeLeft(0);
     setSelectedMinutes(null);
+    setIsWsConnected(false);
     setIsSpeaking(false);
   }, []);
+
+  const callStatusLabel = !isWsConnected
+    ? "Connecting..."
+    : isSpeaking
+      ? "Speaking..."
+      : "Listening...";
+
+  const timerHours = Math.floor(timeLeft / 3600);
+  const timerMinutes = Math.floor((timeLeft % 3600) / 60);
+  const timerSeconds = timeLeft % 60;
+  const timerAriaLabel = `${timerHours.toString().padStart(2, "0")}:${timerMinutes.toString().padStart(2, "0")}:${timerSeconds.toString().padStart(2, "0")}`;
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-[#0F0F13] text-white font-sans selection:bg-rose-500/30">
@@ -293,12 +307,12 @@ export default function Home() {
             {/* Absolute Top Right End Call Button (Page Corner) */}
             <button
               onClick={handleEndCall}
-              className="fixed top-6 right-6 sm:top-10 sm:right-10 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors duration-300 z-50 backdrop-blur-md"
+              className="group fixed top-6 right-6 sm:top-10 sm:right-10 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-rose-900/35 hover:border-rose-700/60 transition-colors duration-300 z-50 backdrop-blur-md"
               aria-label="End call"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5 sm:w-6 sm:h-6 text-white/80"
+                className="w-5 h-5 sm:w-6 sm:h-6 text-white/80 group-hover:text-rose-300 group-hover:rotate-90 transition-all duration-300 ease-out"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -312,9 +326,9 @@ export default function Home() {
             </button>
 
             {/* Central Minimal Avatar */}
-            <div className="relative z-10 flex flex-col items-center animate-fade-in-up">
+            <div className="relative z-10 flex flex-col items-center gap-4 sm:gap-6 animate-fade-in-up">
               {/* Subtle Breathing Avatar */}
-              <div className="relative mb-12 sm:mb-16">
+              <div className="relative">
                 {/* Voice reactive glow */}
                 <div
                   className={`absolute inset-[-10px] rounded-full bg-white/20 blur-xl transition-all duration-300 ease-out
@@ -342,24 +356,51 @@ export default function Home() {
               </div>
 
               {/* Minimal Text Status & Timer */}
-              <div className="text-center">
-                <h3 className="text-2xl sm:text-3xl font-light text-white tracking-wide mb-2">
+              <div className="text-center flex flex-col items-center gap-2 sm:gap-3">
+                <h3 className="text-2xl sm:text-3xl font-light text-white tracking-wide">
                   {CREATOR.name}
                 </h3>
 
-                <div className="flex items-center justify-center gap-2 mb-8">
+                <div
+                  className={`inline-flex items-center justify-center gap-2 px-3 py-1 rounded-full ${!isWsConnected ? "bg-transparent border border-transparent" : "bg-white/5 border border-white/10"}`}
+                >
                   <div
-                    className={`w-1.5 h-1.5 rounded-full ${isSpeaking ? "bg-green-400 animate-pulse" : "bg-white/30"}`}
+                    className={`w-1.5 h-1.5 rounded-full ${!isWsConnected ? "bg-amber-300 animate-pulse" : isSpeaking ? "bg-green-400 animate-pulse" : "bg-cyan-300"}`}
                   />
-                  <span className="text-xs sm:text-sm text-white/50 uppercase tracking-[0.2em] font-medium">
-                    {isSpeaking ? "Speaking" : "Connected"}
+                  <span className="text-[11px] sm:text-xs text-white/65 uppercase tracking-[0.18em] font-semibold">
+                    {callStatusLabel}
                   </span>
                 </div>
 
-                {/* Elegant Minimal Timer */}
-                <div className="inline-block px-6 py-2 sm:px-8 sm:py-3 rounded-full bg-white/5 border border-white/5 backdrop-blur-sm">
-                  <span className="text-3xl sm:text-4xl font-extralight tabular-nums tracking-tighter text-white">
-                    {formatTime(timeLeft)}
+                {/* Enhanced Timer */}
+                <div className="mt-1 sm:mt-2 inline-flex flex-col items-center min-w-[170px] sm:min-w-[190px] rounded-2xl border border-white/15 bg-black/35 backdrop-blur-xl px-5 py-2.5 sm:px-6 sm:py-3 shadow-[0_10px_28px_rgba(0,0,0,0.4)]">
+                  <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.22em] text-white/55 font-semibold">
+                    Time Left
+                  </span>
+                  <span className="countdown font-mono mt-1 text-[36px] sm:text-[42px] leading-none font-light tracking-[-0.03em] text-white">
+                    <span
+                      style={{ "--value": timerHours, "--digits": 2 } as CSSProperties}
+                      aria-live="polite"
+                      aria-label={timerAriaLabel}
+                    >
+                      {timerHours.toString().padStart(2, "0")}
+                    </span>
+                    :
+                    <span
+                      style={{ "--value": timerMinutes, "--digits": 2 } as CSSProperties}
+                      aria-live="polite"
+                      aria-label={timerAriaLabel}
+                    >
+                      {timerMinutes.toString().padStart(2, "0")}
+                    </span>
+                    :
+                    <span
+                      style={{ "--value": timerSeconds, "--digits": 2 } as CSSProperties}
+                      aria-live="polite"
+                      aria-label={timerAriaLabel}
+                    >
+                      {timerSeconds.toString().padStart(2, "0")}
+                    </span>
                   </span>
                 </div>
               </div>
