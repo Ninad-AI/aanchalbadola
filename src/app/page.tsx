@@ -5,6 +5,7 @@ import Image from "next/image";
 import { startStreamingMic, type StreamingMicHandle } from "./utils/audioUtils";
 
 type FlowState = "idle" | "auth" | "payment" | "active";
+type CallPhase = "connecting" | "listening" | "processing" | "speaking";
 
 const WS_URL = process.env.NEXT_PUBLIC_BACKEND_WS_URL || "ws://localhost:8000/ws/audio";
 
@@ -28,6 +29,7 @@ export default function Home() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isWsConnected, setIsWsConnected] = useState(false);
+  const [callPhase, setCallPhase] = useState<CallPhase>("connecting");
   const [isVisible, setIsVisible] = useState(false);
 
   const mousePosRef = useRef({ x: 0, y: 0 });
@@ -163,6 +165,7 @@ export default function Home() {
 
     setIsWsConnected(false);
     setIsSpeaking(false);
+    setCallPhase("connecting");
 
     const ws = new WebSocket(WS_URL);
     ws.binaryType = "arraybuffer";
@@ -170,14 +173,19 @@ export default function Home() {
 
     ws.onopen = async () => {
       setIsWsConnected(true);
+      setCallPhase("listening");
       try {
         const controller = await startStreamingMic(ws, (level) => {
           // Audio level only drives the visual indicator when not in TTS playback
         }, {
           energyThreshold: 0.01,
           silenceMs: 600,
-          onSpeechStart: () => { },
-          onSpeechEnd: () => { },
+          onSpeechStart: () => {
+            setCallPhase("listening");
+          },
+          onSpeechEnd: () => {
+            setCallPhase("processing");
+          },
         });
         micControllerRef.current = controller;
       } catch (err) {
@@ -187,13 +195,21 @@ export default function Home() {
 
     ws.onmessage = (event: MessageEvent) => {
       if (event.data instanceof ArrayBuffer) {
+        setIsSpeaking(true);
+        setCallPhase("speaking");
         processBinaryChunk(event.data);
       } else {
         // JSON control messages (tts_start, tts_end, etc.)
         try {
           const msg = JSON.parse(event.data as string);
-          if (msg.type === "tts_start") setIsSpeaking(true);
-          if (msg.type === "tts_end") setIsSpeaking(false);
+          if (msg.type === "tts_start") {
+            setIsSpeaking(true);
+            setCallPhase("speaking");
+          }
+          if (msg.type === "tts_end") {
+            setIsSpeaking(false);
+            setCallPhase("listening");
+          }
         } catch {
           /* ignore non-JSON */
         }
@@ -202,11 +218,13 @@ export default function Home() {
 
     ws.onerror = () => {
       setIsWsConnected(false);
+      setCallPhase("connecting");
     };
 
     ws.onclose = () => {
       setIsWsConnected(false);
       setIsSpeaking(false);
+      setCallPhase("connecting");
     };
 
     return () => {
@@ -254,6 +272,7 @@ export default function Home() {
     setSelectedMinutes(null);
     setIsWsConnected(false);
     setIsSpeaking(false);
+    setCallPhase("connecting");
   }, [stopPlaybackImmediately]);
 
   /* ── Countdown timer ── */
@@ -276,11 +295,14 @@ export default function Home() {
     };
   }, [flowState, timeLeft, handleEndCall]);
 
-  const callStatusLabel = !isWsConnected
-    ? "Connecting..."
-    : isSpeaking
-      ? "Speaking..."
-      : "Listening...";
+  const callStatusLabel =
+    callPhase === "speaking"
+        ? "Speaking..."
+        : callPhase === "listening"
+          ? "Listening..."
+        : callPhase === "processing"
+          ? "Listening..."
+          : "Connecting...";
 
   const timerMinutes = Math.floor(timeLeft / 60);
   const timerSeconds = timeLeft % 60;
@@ -382,7 +404,7 @@ export default function Home() {
 
                 <div className="inline-flex items-center justify-center gap-2">
                   <div
-                    className={`w-1.5 h-1.5 rounded-full ${!isWsConnected ? "bg-amber-300 animate-pulse" : isSpeaking ? "bg-green-400 animate-pulse" : "bg-cyan-300"}`}
+                    className={`w-1.5 h-1.5 rounded-full ${callPhase === "connecting" ? "bg-amber-300 animate-pulse" : callPhase === "speaking" ? "bg-green-400 animate-pulse" : "bg-cyan-300"}`}
                   />
                   <span className="text-[11px] sm:text-xs text-white/65 uppercase tracking-[0.18em] font-semibold">
                     {callStatusLabel}
