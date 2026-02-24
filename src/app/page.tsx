@@ -282,10 +282,9 @@ export default function Home() {
       ? "Speaking..."
       : "Listening...";
 
-  const timerHours = Math.floor(timeLeft / 3600);
-  const timerMinutes = Math.floor((timeLeft % 3600) / 60);
+  const timerMinutes = Math.floor(timeLeft / 60);
   const timerSeconds = timeLeft % 60;
-  const timerAriaLabel = `${timerHours.toString().padStart(2, "0")}:${timerMinutes.toString().padStart(2, "0")}:${timerSeconds.toString().padStart(2, "0")}`;
+  const timerAriaLabel = `${timerMinutes.toString().padStart(2, "0")}:${timerSeconds.toString().padStart(2, "0")}`;
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-[#0F0F13] text-white font-sans selection:bg-rose-500/30">
@@ -381,9 +380,7 @@ export default function Home() {
                   {CREATOR.name}
                 </h3>
 
-                <div
-                  className={`inline-flex items-center justify-center gap-2 px-3 py-1 rounded-full ${!isWsConnected ? "bg-transparent border border-transparent" : "bg-white/5 border border-white/10"}`}
-                >
+                <div className="inline-flex items-center justify-center gap-2">
                   <div
                     className={`w-1.5 h-1.5 rounded-full ${!isWsConnected ? "bg-amber-300 animate-pulse" : isSpeaking ? "bg-green-400 animate-pulse" : "bg-cyan-300"}`}
                   />
@@ -398,14 +395,6 @@ export default function Home() {
                     Time Left
                   </span>
                   <span className="countdown font-mono mt-1 text-[36px] sm:text-[42px] leading-none font-light tracking-[-0.03em] text-white">
-                    <span
-                      style={{ "--value": timerHours, "--digits": 2 } as CSSProperties}
-                      aria-live="polite"
-                      aria-label={timerAriaLabel}
-                    >
-                      {timerHours.toString().padStart(2, "0")}
-                    </span>
-                    :
                     <span
                       style={{ "--value": timerMinutes, "--digits": 2 } as CSSProperties}
                       aria-live="polite"
