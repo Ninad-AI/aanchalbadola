@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Ripple from './ui/ripple';
 
 interface VoiceSessionUIProps {
@@ -15,6 +15,24 @@ interface VoiceSessionUIProps {
     creatorImage: string;
 }
 
+/** Returns layout dimensions tuned to the current viewport width. */
+function getLayout(vw: number) {
+    if (vw < 360) {
+        // Very small phones (SE 1st gen, Galaxy A series low-end)
+        return { ringSize: 220, imgSize: 166, circleGap: 44, numCircles: 7 };
+    }
+    if (vw < 480) {
+        // Standard mobile (iPhone 14, Pixel, Galaxy S)
+        return { ringSize: 250, imgSize: 190, circleGap: 50, numCircles: 7 };
+    }
+    if (vw < 768) {
+        // Large phones / small tablets in portrait
+        return { ringSize: 270, imgSize: 206, circleGap: 56, numCircles: 8 };
+    }
+    // Tablets and desktops — give the ripples more room to breathe
+    return { ringSize: 300, imgSize: 228, circleGap: 70, numCircles: 9 };
+}
+
 export default function VoiceSessionUI({
     isSpeaking,
     callPhase,
@@ -25,12 +43,27 @@ export default function VoiceSessionUI({
 }: VoiceSessionUIProps) {
     const [isPlaying, setIsPlaying] = useState(true);
 
-    // Timer ring dimensions — scale down on very small screens
-    const RING_SIZE = 280;   // container px
-    const IMG_SIZE = 216;   // image diameter px
+    // Responsive layout — recalculate on window resize (orientation changes etc.)
+    const [layout, setLayout] = useState(() =>
+        typeof window !== 'undefined'
+            ? getLayout(window.innerWidth)
+            : getLayout(375) // SSR fallback: assume a standard phone
+    );
+
+    useEffect(() => {
+        function onResize() {
+            setLayout(getLayout(window.innerWidth));
+        }
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+
+    const { ringSize: RING_SIZE, imgSize: IMG_SIZE, circleGap, numCircles } = layout;
+
+    // Progress ring geometry
     const cx = RING_SIZE / 2;
     const cy = RING_SIZE / 2;
-    const radius = IMG_SIZE / 2 + 10;  // small gap between image edge and ring
+    const radius = IMG_SIZE / 2 + 10; // small gap between image edge and ring
     const circumference = 2 * Math.PI * radius;
     const progress = totalTime > 0 ? timeLeft / totalTime : 0;
     const dashOffset = circumference * (1 - progress);
@@ -42,19 +75,20 @@ export default function VoiceSessionUI({
         return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
     };
 
-    const statusDotColor = callPhase === 'connecting'
-        ? { ping: 'bg-amber-400', dot: 'bg-amber-500' }
-        : { ping: 'bg-rose-400', dot: 'bg-rose-500' };
+    const statusDotColor =
+        callPhase === 'connecting'
+            ? { ping: 'bg-amber-400', dot: 'bg-amber-500' }
+            : { ping: 'bg-rose-400', dot: 'bg-rose-500' };
 
     return (
         <Ripple
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-            color="rgba(255, 255, 255, 0.15)"
+            color="rgba(255, 255, 255, 0.18)"
             mainCircleSize={IMG_SIZE}
-            numCircles={8}
+            mainCircleOpacity={0.22}
+            numCircles={numCircles}
+            circleGap={circleGap}
         >
-
-
             {/* Close button */}
             <div className="fixed right-4 top-4 z-[100] sm:right-8 sm:top-8">
                 <button
@@ -129,10 +163,12 @@ export default function VoiceSessionUI({
                         />
                     </div>
 
-                    {/* Controls - absolutely below the circle, so they don't shift the image */}
-                    <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 translate-y-[155px] flex-col items-center gap-8">
+                    {/* Controls — positioned below the circle */}
+                    <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 flex-col items-center gap-6 sm:gap-8"
+                        style={{ marginTop: IMG_SIZE / 2 + 24 }}
+                    >
                         {/* Timer */}
-                        <span className="tabular-nums text-5xl font-extralight tracking-tight text-white/95 drop-shadow-[0_0_20px_rgba(255,255,255,0.2)] sm:text-6xl">
+                        <span className="tabular-nums text-4xl font-extralight tracking-tight text-white/95 drop-shadow-[0_0_20px_rgba(255,255,255,0.2)] sm:text-5xl md:text-6xl">
                             {formatTime(timeLeft)}
                         </span>
 
@@ -150,16 +186,16 @@ export default function VoiceSessionUI({
                         {/* Play / Pause */}
                         <button
                             onClick={() => setIsPlaying(p => !p)}
-                            className="group flex h-16 w-16 items-center justify-center rounded-full border-2 border-white/20 bg-white/5 shadow-xl backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/10 sm:h-20 sm:w-20"
+                            className="group flex h-14 w-14 items-center justify-center rounded-full border-2 border-white/20 bg-white/5 shadow-xl backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/10 sm:h-16 sm:w-16 md:h-20 md:w-20"
                         >
                             {isPlaying ? (
                                 <div className="flex gap-1.5">
-                                    <div className="h-6 w-1.5 rounded-full bg-white/80 transition-colors group-hover:bg-white sm:h-7" />
-                                    <div className="h-6 w-1.5 rounded-full bg-white/80 transition-colors group-hover:bg-white sm:h-7" />
+                                    <div className="h-5 w-1.5 rounded-full bg-white/80 transition-colors group-hover:bg-white sm:h-6 md:h-7" />
+                                    <div className="h-5 w-1.5 rounded-full bg-white/80 transition-colors group-hover:bg-white sm:h-6 md:h-7" />
                                 </div>
                             ) : (
                                 <svg
-                                    className="ml-1 h-8 w-8 fill-current text-white/80 transition-colors group-hover:text-white sm:h-9 sm:w-9"
+                                    className="ml-1 h-7 w-7 fill-current text-white/80 transition-colors group-hover:text-white sm:h-8 sm:w-8"
                                     viewBox="0 0 24 24"
                                 >
                                     <path d="M8 5v14l11-7z" />

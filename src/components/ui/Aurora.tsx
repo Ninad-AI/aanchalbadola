@@ -17,6 +17,7 @@ uniform float uTime;
 uniform float uAmplitude;
 uniform vec3 uColorStops[3];
 uniform vec2 uResolution;
+uniform float uRatio;
 uniform float uBlend;
 
 out vec4 fragColor;
@@ -95,7 +96,9 @@ void main() {
   vec3 rampColor;
   COLOR_RAMP(colors, uv.x, rampColor);
   
-  float height = snoise(vec2(uv.x * 2.0 + uTime * 0.1, uTime * 0.25)) * 0.5 * uAmplitude;
+  // Scale noise frequency based on ratio so waves don't look vertically spiked on mobile
+  float noiseX = uv.x * uRatio * 1.5 + uTime * 0.1;
+  float height = snoise(vec2(noiseX, uTime * 0.25)) * 0.5 * uAmplitude;
   height = exp(height);
   height = (uv.y * 2.0 - height + 0.2);
   float intensity = 0.6 * height;
@@ -128,29 +131,41 @@ export default function Aurora(props: AuroraProps) {
     const ctn = ctnDom.current;
     if (!ctn) return;
 
+    // Use device pixel ratio for crisp rendering on retina / mobile HiDPI screens
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
     const renderer = new Renderer({
       alpha: true,
       premultipliedAlpha: true,
-      antialias: true
+      antialias: false, // antialias off at higher DPR — cheaper on mobile GPU
+      dpr,
     });
     const gl = renderer.gl;
     gl.clearColor(0, 0, 0, 0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.canvas.style.backgroundColor = 'transparent';
+    // Ensure canvas fills container at CSS size (DPR handled internally by OGL)
+    gl.canvas.style.width = '100%';
+    gl.canvas.style.height = '100%';
 
     let program: Program | undefined;
 
+    function getSize() {
+      if (!ctn) return { w: 0, h: 0 };
+      // Use clientWidth/Height for layout pixel size (not devicePixel)
+      return { w: ctn.clientWidth, h: ctn.clientHeight };
+    }
+
     function resize() {
-      if (!ctn) return;
-      const width = ctn.offsetWidth;
-      const height = ctn.offsetHeight;
-      renderer.setSize(width, height);
+      const { w, h } = getSize();
+      if (w === 0 || h === 0) return;
+      renderer.setSize(w, h);
       if (program) {
-        program.uniforms.uResolution.value = [width, height];
+        program.uniforms.uResolution.value = [w * dpr, h * dpr];
+        program.uniforms.uRatio.value = w / h;
       }
     }
-    window.addEventListener('resize', resize);
 
     const geometry = new Triangle(gl);
     if (geometry.attributes.uv) {
@@ -162,6 +177,8 @@ export default function Aurora(props: AuroraProps) {
       return [c.r, c.g, c.b];
     });
 
+    const { w, h } = getSize();
+
     program = new Program(gl, {
       vertex: VERT,
       fragment: FRAG,
@@ -169,13 +186,21 @@ export default function Aurora(props: AuroraProps) {
         uTime: { value: 0 },
         uAmplitude: { value: amplitude },
         uColorStops: { value: colorStopsArray },
-        uResolution: { value: [ctn.offsetWidth, ctn.offsetHeight] },
-        uBlend: { value: blend }
-      }
+        uResolution: { value: [w * dpr, h * dpr] },
+        uRatio: { value: w / h },
+        uBlend: { value: blend },
+      },
     });
 
     const mesh = new Mesh(gl, { geometry, program });
     ctn.appendChild(gl.canvas);
+
+    // ResizeObserver handles mobile viewport changes (browser chrome appearing/disappearing,
+    // orientation changes) far more reliably than window resize alone
+    const ro = new ResizeObserver(() => resize());
+    ro.observe(ctn);
+    // Also keep the window listener for Safari compatibility
+    window.addEventListener('resize', resize);
 
     let animateId = 0;
     const update = (t: number) => {
@@ -199,13 +224,15 @@ export default function Aurora(props: AuroraProps) {
 
     return () => {
       cancelAnimationFrame(animateId);
+      ro.disconnect();
       window.removeEventListener('resize', resize);
       if (ctn && gl.canvas.parentNode === ctn) {
         ctn.removeChild(gl.canvas);
       }
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
-  }, [amplitude]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally only run once; all live updates go through propsRef
 
   return <div ref={ctnDom} className="w-full h-full" />;
 }

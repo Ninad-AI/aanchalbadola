@@ -34,6 +34,14 @@ export default function Home() {
   const [callPhase, setCallPhase] = useState<CallPhase>("connecting");
   const [isVisible, setIsVisible] = useState(false);
   const [micLevel, setMicLevel] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(1200);
+
+  useEffect(() => {
+    setWindowWidth(window.innerWidth);
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const mousePosRef = useRef({ x: 0, y: 0 });
   const mouseTargetRef = useRef({ x: 0, y: 0 });
@@ -340,6 +348,10 @@ export default function Home() {
   const timerSeconds = timeLeft % 60;
   const timerAriaLabel = `${timerMinutes.toString().padStart(2, "0")}:${timerSeconds.toString().padStart(2, "0")}`;
 
+  const isMobile = windowWidth < 768;
+  const baseAmplitude = isMobile ? 0.6 : 1.0;
+  const finalAmplitude = flowState === "active" ? baseAmplitude * 0.6 : baseAmplitude;
+
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-[#0F0F13] text-white font-sans selection:bg-rose-500/30">
       {/* ── Background Aurora ── */}
@@ -347,7 +359,7 @@ export default function Home() {
         <Aurora
           colorStops={["#0B132B", "#6366f1", "#ec4899"]}
           blend={0.5}
-          amplitude={flowState === "active" ? 0.6 : 1.0}
+          amplitude={finalAmplitude}
           speed={0.5}
         />
       </div>
