@@ -27,7 +27,7 @@ export default function VoiceSessionUI({
 
     // Timer ring dimensions — scale down on very small screens
     const RING_SIZE = 280;   // container px
-    const IMG_SIZE  = 216;   // image diameter px
+    const IMG_SIZE = 216;   // image diameter px
     const cx = RING_SIZE / 2;
     const cy = RING_SIZE / 2;
     const radius = IMG_SIZE / 2 + 10;  // small gap between image edge and ring
@@ -53,11 +53,7 @@ export default function VoiceSessionUI({
             mainCircleSize={IMG_SIZE}
             numCircles={8}
         >
-            {/* Corner ambient glows */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                <div className="absolute -top-24 -left-24 h-[50vw] w-[50vw] rounded-full bg-rose-500/10 blur-[120px]" />
-                <div className="absolute -bottom-24 -right-24 h-[50vw] w-[50vw] rounded-full bg-indigo-500/10 blur-[120px]" />
-            </div>
+
 
             {/* Close button */}
             <div className="fixed right-4 top-4 z-[100] sm:right-8 sm:top-8">

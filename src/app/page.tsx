@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, type CSSProperties } from "re
 import Image from "next/image";
 import { startStreamingMic, type StreamingMicHandle } from "./utils/audioUtils";
 import VoiceSessionUI from "../components/VoiceSessionUI";
+import Aurora from "../components/ui/Aurora";
 
 type FlowState = "idle" | "auth" | "payment" | "active";
 type CallPhase = "connecting" | "listening" | "speaking";
@@ -341,19 +342,13 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-[#0F0F13] text-white font-sans selection:bg-rose-500/30">
-      {/* ── Background Blobs ── */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute top-[-10%] left-[-10%] w-[70vw] h-[70vw] bg-rose-500/20 blur-[100px] animate-blob mix-blend-screen"
-          style={{ borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%" }}
-        />
-        <div
-          className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-indigo-500/20 blur-[100px] animate-blob animation-delay-2000 mix-blend-screen"
-          style={{ borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%" }}
-        />
-        <div
-          className="absolute top-[30%] left-[40%] w-[50vw] h-[50vw] bg-purple-500/20 blur-[120px] animate-blob animation-delay-4000 mix-blend-screen"
-          style={{ borderRadius: "50% 50% 20% 80% / 25% 80% 20% 75%" }}
+      {/* ── Background Aurora ── */}
+      <div className="absolute inset-0 pointer-events-none">
+        <Aurora
+          colorStops={["#0B132B", "#6366f1", "#ec4899"]}
+          blend={0.5}
+          amplitude={flowState === "active" ? 0.6 : 1.0}
+          speed={0.5}
         />
       </div>
 
