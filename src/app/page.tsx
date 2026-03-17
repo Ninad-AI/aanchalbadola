@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, type CSSProperties } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { startStreamingMic, type StreamingMicHandle } from "./utils/audioUtils";
 import VoiceSessionUI from "../components/VoiceSessionUI";
@@ -30,10 +30,8 @@ export default function Home() {
   const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isWsConnected, setIsWsConnected] = useState(false);
   const [callPhase, setCallPhase] = useState<CallPhase>("connecting");
   const [isVisible, setIsVisible] = useState(false);
-  const [micLevel, setMicLevel] = useState(0);
 
   const mousePosRef = useRef({ x: 0, y: 0 });
   const mouseTargetRef = useRef({ x: 0, y: 0 });
@@ -167,7 +165,6 @@ export default function Home() {
   useEffect(() => {
     if (flowState !== "active") return;
 
-    setIsWsConnected(false);
     setIsSpeaking(false);
     setCallPhase("connecting");
 
@@ -176,18 +173,11 @@ export default function Home() {
     wsRef.current = ws;
 
     ws.onopen = async () => {
-      setIsWsConnected(true);
       setCallPhase("listening");
       ttsActiveRef.current = false;
       try {
-        let lastLevelUpdate = 0;
-        const controller = await startStreamingMic(ws, (level) => {
-          // Audio level only drives the visual indicator
-          const now = Date.now();
-          if (now - lastLevelUpdate > 50) {
-            setMicLevel(level);
-            lastLevelUpdate = now;
-          }
+        const controller = await startStreamingMic(ws, () => {
+          // Mic level callback intentionally ignored for now.
         }, {
           energyThreshold: 0.01,
           silenceMs: 600,
@@ -249,12 +239,10 @@ export default function Home() {
     };
 
     ws.onerror = () => {
-      setIsWsConnected(false);
       setCallPhase("connecting");
     };
 
     ws.onclose = () => {
-      setIsWsConnected(false);
       setIsSpeaking(false);
       setCallPhase("connecting");
     };
@@ -304,7 +292,6 @@ export default function Home() {
     setFlowState("idle");
     setTimeLeft(0);
     setSelectedMinutes(null);
-    setIsWsConnected(false);
     setIsSpeaking(false);
     setCallPhase("connecting");
   }, [stopPlaybackImmediately]);
@@ -329,17 +316,6 @@ export default function Home() {
     };
   }, [flowState, timeLeft, handleEndCall]);
 
-  const callStatusLabel =
-    callPhase === "speaking"
-      ? "Speaking..."
-      : callPhase === "listening"
-        ? "Listening..."
-        : "Connecting...";
-
-  const timerMinutes = Math.floor(timeLeft / 60);
-  const timerSeconds = timeLeft % 60;
-  const timerAriaLabel = `${timerMinutes.toString().padStart(2, "0")}:${timerSeconds.toString().padStart(2, "0")}`;
-
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-[#0F0F13] text-white font-sans selection:bg-rose-500/30">
       {/* ── Background Aurora ── */}
@@ -363,7 +339,6 @@ export default function Home() {
         {flowState === "active" ? (
           <VoiceSessionUI
             isSpeaking={isSpeaking}
-            micLevel={micLevel}
             callPhase={callPhase}
             timeLeft={timeLeft}
             totalTime={selectedMinutes ? selectedMinutes * 60 : 0}

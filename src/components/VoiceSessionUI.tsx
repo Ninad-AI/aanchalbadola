@@ -1,12 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
 import Ripple from './ui/ripple';
 
 interface VoiceSessionUIProps {
     isSpeaking: boolean;
-    micLevel: number;
     callPhase: 'connecting' | 'listening' | 'speaking';
     timeLeft: number;
     totalTime: number;
@@ -22,9 +20,8 @@ export default function VoiceSessionUI({
     totalTime,
     onEndCall,
     creatorName,
+    creatorImage,
 }: VoiceSessionUIProps) {
-    const [isPlaying, setIsPlaying] = useState(true);
-
     // Timer ring dimensions — scale down on very small screens
     const RING_SIZE = 280;   // container px
     const IMG_SIZE = 216;   // image diameter px
@@ -117,7 +114,7 @@ export default function VoiceSessionUI({
                         style={{ width: IMG_SIZE, height: IMG_SIZE }}
                     >
                         <Image
-                            src="/aanchalbadola.jpg"
+                            src={creatorImage}
                             alt={creatorName}
                             fill
                             className="object-cover"
@@ -147,25 +144,6 @@ export default function VoiceSessionUI({
                             </span>
                         </div>
 
-                        {/* Play / Pause */}
-                        <button
-                            onClick={() => setIsPlaying(p => !p)}
-                            className="group flex h-16 w-16 items-center justify-center rounded-full border-2 border-white/20 bg-white/5 shadow-xl backdrop-blur-sm transition-all hover:border-white/40 hover:bg-white/10 sm:h-20 sm:w-20"
-                        >
-                            {isPlaying ? (
-                                <div className="flex gap-1.5">
-                                    <div className="h-6 w-1.5 rounded-full bg-white/80 transition-colors group-hover:bg-white sm:h-7" />
-                                    <div className="h-6 w-1.5 rounded-full bg-white/80 transition-colors group-hover:bg-white sm:h-7" />
-                                </div>
-                            ) : (
-                                <svg
-                                    className="ml-1 h-8 w-8 fill-current text-white/80 transition-colors group-hover:text-white sm:h-9 sm:w-9"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path d="M8 5v14l11-7z" />
-                                </svg>
-                            )}
-                        </button>
                     </div>
                 </div>
             </div>
