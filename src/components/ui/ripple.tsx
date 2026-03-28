@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 
-export interface RippleProps {
+interface RippleProps {
   className?: string
   children?: React.ReactNode
   /** Size of the innermost circle in pixels */
@@ -15,14 +15,14 @@ export interface RippleProps {
   color?: string
 }
 
-export function Ripple({
+const Ripple = ({
   className,
   children,
   mainCircleSize = 210,
   mainCircleOpacity = 0.24,
   numCircles = 8,
   color = "rgba(255, 255, 255, 0.8)",
-}: RippleProps) {
+}: RippleProps) => {
   return (
     <div className={cn("fixed inset-0 overflow-hidden bg-transparent", className)}>
       {/* Keyframe animation */}
